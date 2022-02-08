@@ -91,11 +91,16 @@ class PopulationAffineTransforms(torch.nn.Module):
 		self._num_patches = num_patches #new
 
 		default_settings = affine_transform_settings.copy()
+
+		print('settings:', settings, 'default_settings': default_settings) #remove #debug
+
 		if len(settings):
 			for setting, val in settings.items():
 				if setting in default_settings: default_settings.setting = val
 
 		self._settings = default_settings #new #*
+
+		print('self._settings:', self._settings) #remove #debug
 
 		self._pop_size = pop_size
 		matrices_translation = (
