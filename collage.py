@@ -327,9 +327,9 @@ class CollageMaker():
 	def loop(self):
 		"""Main optimisation/image generation loop. Can be interrupted."""
 		if self._step == 0:
-			print('Starting optimization of collage.')
+			print(f'Starting optimization of collage. ({OPTIM_STEPS} steps total.)')
 		else:
-			print(f'Continuing optimization of collage at step {self._step}.')
+			print(f'Continuing optimization of collage at step {self._step}.') #?
 			if self._video_steps:
 				print(f"Aborting video creation (does not work when interrupted).")
 				self._video_steps = 0
@@ -338,6 +338,8 @@ class CollageMaker():
 					self._population_video_writer = None
 		
 		while self._step < OPTIM_STEPS:
+			print(f'Continuing optimization of collage at step ({self._step} / {OPTIM_STEPS}).') #new #?
+
 			last_step = self._step == (OPTIM_STEPS - 1)
 			losses, losses_separated, img_batch = step_optimization(
 				self._device, self._dir_results, OPTIM_STEPS, self._step, self._clip_model, self._optimizer, self._generator,
@@ -507,7 +509,9 @@ class CollageTiler():
 
 	def loop(self):
 		while self._y < self._tiles_high:
+			print(f'\ny tile {self._y} / {self._tiles_high}.') #?
 			while self._x < self._tiles_wide:
+				print(f'x tile {self._x} / {self._tiles_wide}.') #?
 				if not self._collage_maker:
 					# Create new collage maker with its unique background.
 					print(f"New collage creator for y{self._y}, x{self._x} with bg:")

@@ -427,7 +427,7 @@ class PopulationColourRGBTransforms(torch.nn.Module):
 		self.blues.data = self.blues.data.clamp(min=self._settings['MIN_RGB'], max=self._settings['MAX_RGB'])
 		self.orders.data = self.orders.data.clamp(min=0.0, max=1.0)
 
-	def copy_and_mutate_s(self, device, parent, child): #device is #new
+	def copy_and_mutate_s(self, parent, child):
 		device = self._device
 
 		with torch.no_grad():
