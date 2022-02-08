@@ -92,7 +92,7 @@ class PopulationAffineTransforms(torch.nn.Module):
 
 		default_settings = affine_transform_settings.copy()
 
-		print('settings:', settings, 'default_settings': default_settings) #remove #debug
+		print('settings:', settings, 'default_settings', default_settings) #remove #debug
 
 		if len(settings):
 			for setting, val in settings.items():
