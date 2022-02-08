@@ -99,20 +99,20 @@ class PopulationAffineTransforms(torch.nn.Module):
 
 		self._pop_size = pop_size
 		matrices_translation = (
-			np.random.rand(pop_size, num_patches, 2, 1) * (self._settings.MAX_TRANS - self._settings.MIN_TRANS) 
-			+ self._settings.MIN_TRANS)
+			np.random.rand(pop_size, num_patches, 2, 1) * (self._settings['MAX_TRANS'] - self._settings['MIN_TRANS']) 
+			+ self._settings['MIN_TRANS'])
 		matrices_rotation = (
-			np.random.rand(pop_size, num_patches, 1, 1) * (self._settings.MAX_ROT - self._settings.MIN_ROT)
-			+ self._settings.MIN_ROT)
+			np.random.rand(pop_size, num_patches, 1, 1) * (self._settings['MAX_ROT'] - self._settings['MIN_ROT'])
+			+ self._settings['MIN_ROT'])
 		matrices_scale = (
-			np.random.rand(pop_size, num_patches, 1, 1) * (self._settings.MAX_SCALE - self._settings.MIN_SCALE) 
-			+ self._settings.MIN_SCALE)
+			np.random.rand(pop_size, num_patches, 1, 1) * (self._settings['MAX_SCALE'] - self._settings['MIN_SCALE']) 
+			+ self._settings['MIN_SCALE'])
 		matrices_squeeze = (
 			np.random.rand(pop_size, num_patches, 1, 1) * (
-				(self._settings.MAX_SQUEEZE - self._settings.MIN_SQUEEZE) + self._settings.MIN_SQUEEZE))
+				(self._settings['MAX_SQUEEZE'] - self._settings['MIN_SQUEEZE']) + self._settings['MIN_SQUEEZE']))
 		matrices_shear = (
-			np.random.rand(pop_size, num_patches, 1, 1) * (self._settings.MAX_SHEAR - self._settings.MIN_SHEAR) 
-			+ self._settings.MIN_SHEAR)
+			np.random.rand(pop_size, num_patches, 1, 1) * (self._settings['MAX_SHEAR'] - self._settings['MIN_SHEAR']) 
+			+ self._settings['MIN_SHEAR'])
 		self.translation = torch.nn.Parameter(
 			torch.tensor(matrices_translation, dtype=torch.float),
 			requires_grad=True)
@@ -139,15 +139,15 @@ class PopulationAffineTransforms(torch.nn.Module):
 
 	def _clamp(self):
 		self.translation.data = self.translation.data.clamp(
-			min=self._settings.MIN_TRANS, max=self._settings.MAX_TRANS)
+			min=self._settings['MIN_TRANS'], max=self._settings['MAX_TRANS'])
 		self.rotation.data = self.rotation.data.clamp(
-			min=self._settings.MIN_ROT, max=self._settings.MAX_ROT)
+			min=self._settings['MIN_ROT'], max=self._settings['MAX_ROT'])
 		self.scale.data = self.scale.data.clamp(
-			min=self._settings.MIN_SCALE, max=self._settings.MAX_SCALE)
+			min=self._settings['MIN_SCALE'], max=self._settings['MAX_SCALE'])
 		self.squeeze.data = self.squeeze.data.clamp(
-			min=self._settings.MIN_SQUEEZE, max=self._settings.MAX_SQUEEZE)
+			min=self._settings['MIN_SQUEEZE'], max=self._settings['MAX_SQUEEZE'])
 		self.shear.data = self.shear.data.clamp(
-			min=self._settings.MIN_SHEAR, max=self._settings.MAX_SHEAR)
+			min=self._settings['MIN_SHEAR'], max=self._settings['MAX_SHEAR'])
 
 	def copy_and_mutate_s(self, parent, child):
 		"""Copy parameters to child, mutating transform parameters."""
@@ -155,19 +155,19 @@ class PopulationAffineTransforms(torch.nn.Module):
 
 		with torch.no_grad():
 			self.translation[child, ...] = (self.translation[parent, ...] 
-				+ self._settings.POS_AND_ROT_MUTATION_SCALE * torch.randn(
+				+ self._settings['POS_AND_ROT_MUTATION_SCALE'] * torch.randn(
 					self.translation[child, ...].shape).to(device))
 			self.rotation[child, ...] = (self.rotation[parent, ...]  
-				+ self._settings.POS_AND_ROT_MUTATION_SCALE * torch.randn(
+				+ self._settings['POS_AND_ROT_MUTATION_SCALE'] * torch.randn(
 					self.rotation[child, ...].shape).to(device))
 			self.scale[child, ...] = (self.scale[parent, ...] 
-				+ self._settings.SCALE_MUTATION_SCALE * torch.randn(
+				+ self._settings['SCALE_MUTATION_SCALE'] * torch.randn(
 					self.scale[child, ...].shape).to(device))
 			self.squeeze[child, ...] = (self.squeeze[parent, ...]
-				+ self._settings.DISTORT_MUTATION_SCALE * torch.randn(
+				+ self._settings['DISTORT_MUTATION_SCALE'] * torch.randn(
 					self.squeeze[child, ...].shape).to(device))
 			self.shear[child, ...] = (self.shear[parent, ...]
-				+ self._settings.DISTORT_MUTATION_SCALE * torch.randn(
+				+ self._settings['DISTORT_MUTATION_SCALE'] * torch.randn(
 					self.shear[child, ...].shape).to(device))
 
 	def copy_from(self, other, idx_to, idx_from):
@@ -293,9 +293,9 @@ class PopulationColourHSVTransforms(torch.nn.Module):
 			num_patches, pop_size))
 		self._pop_size = pop_size
 
-		coeff_hue = 0.5 * (self._settings.MAX_HUE - self._settings.MIN_HUE) + self._settings.MIN_HUE
-		coeff_sat = 0.5 * (self._settings.MAX_SAT - self._settings.MIN_SAT) + self._settings.MIN_SAT
-		coeff_val = 0.5 * (self._settings.MAX_VAL - self._settings.MIN_VAL) + self._settings.MIN_VAL
+		coeff_hue = 0.5 * (self._settings['MAX_HUE'] - self._settings['MIN_HUE']) + self._settings['MIN_HUE']
+		coeff_sat = 0.5 * (self._settings['MAX_SAT'] - self._settings['MIN_SAT']) + self._settings['MIN_SAT']
+		coeff_val = 0.5 * (self._settings['MAX_VAL'] - self._settings['MIN_VAL']) + self._settings['MIN_VAL']
 		population_hues = np.random.rand(pop_size, num_patches, 1, 1, 1) * coeff_hue
 		population_saturations = np.random.rand(
 			pop_size, num_patches, 1, 1, 1) * coeff_sat
@@ -322,10 +322,10 @@ class PopulationColourHSVTransforms(torch.nn.Module):
 		self._hsv_to_rgb = hsv.HsvToRgb()
 
 	def _clamp(self):
-		self.hues.data = self.hues.data.clamp(min=self._settings.MIN_HUE, max=self._settings.MAX_HUE)
+		self.hues.data = self.hues.data.clamp(min=self._settings['MIN_HUE'], max=self._settings['MAX_HUE'])
 		self.saturations.data = self.saturations.data.clamp(
-			min=self._settings.MIN_SAT, max=self._settings.MAX_SAT)
-		self.values.data = self.values.data.clamp(min=self._settings.MIN_VAL, max=self._settings.MAX_VAL)
+			min=self._settings['MIN_SAT'], max=self._settings['MAX_SAT'])
+		self.values.data = self.values.data.clamp(min=self._settings['MIN_VAL'], max=self._settings['MAX_VAL'])
 		self.orders.data = self.orders.data.clamp(min=0.0, max=1.0)
 
 	def copy_and_mutate_s(self, parent, child):
@@ -334,15 +334,15 @@ class PopulationColourHSVTransforms(torch.nn.Module):
 		with torch.no_grad():
 			self.hues[child, ...] = (
 				self.hues[parent, ...]
-				+ self._settings.COLOUR_MUTATION_SCALE * torch.randn(
+				+ self._settings['COLOUR_MUTATION_SCALE'] * torch.randn(
 					self.hues[child, ...].shape).to(device))
 			self.saturations[child, ...] = (
 				self.saturations[parent, ...]
-				+ self._settings.COLOUR_MUTATION_SCALE * torch.randn(
+				+ self._settings['COLOUR_MUTATION_SCALE'] * torch.randn(
 					self.saturations[child, ...].shape).to(device))
 			self.values[child, ...] = (
 				self.values[parent, ...]
-				+ self._settings.COLOUR_MUTATION_SCALE * torch.randn(
+				+ self._settings['COLOUR_MUTATION_SCALE'] * torch.randn(
 					self.values[child, ...].shape).to(device))
 			self.orders[child, ...] = self.orders[parent, ...]
 
@@ -390,13 +390,13 @@ class PopulationColourRGBTransforms(torch.nn.Module):
 				num_patches, pop_size))
 		self._pop_size = pop_size
 
-		rgb_init_range = self._settings.INITIAL_MAX_RGB - self._settings.INITIAL_MIN_RGB
+		rgb_init_range = self._settings['INITIAL_MAX_RGB'] - self._settings['INITIAL_MIN_RGB']
 		population_reds = (np.random.rand(pop_size, num_patches, 1, 1, 1) 
-			* rgb_init_range) + self._settings.INITIAL_MIN_RGB
+			* rgb_init_range) + self._settings['INITIAL_MIN_RGB']
 		population_greens = (np.random.rand(
-			pop_size, num_patches, 1, 1, 1) * rgb_init_range) + self._settings.INITIAL_MIN_RGB
+			pop_size, num_patches, 1, 1, 1) * rgb_init_range) + self._settings['INITIAL_MIN_RGB']
 		population_blues = (np.random.rand(
-			pop_size, num_patches, 1, 1, 1) * rgb_init_range) + self._settings.INITIAL_MIN_RGB
+			pop_size, num_patches, 1, 1, 1) * rgb_init_range) + self._settings['INITIAL_MIN_RGB']
 		population_zeros = np.ones((pop_size, num_patches, 1, 1, 1))
 		population_orders = np.random.rand(pop_size, num_patches, 1, 1, 1)
 
@@ -417,9 +417,9 @@ class PopulationColourRGBTransforms(torch.nn.Module):
 			requires_grad=True)
 
 	def _clamp(self):
-		self.reds.data = self.reds.data.clamp(min=self._settings.MIN_RGB, max=self._settings.MAX_RGB)
-		self.greens.data = self.greens.data.clamp(min=self._settings.MIN_RGB, max=self._settings.MAX_RGB)
-		self.blues.data = self.blues.data.clamp(min=self._settings.MIN_RGB, max=self._settings.MAX_RGB)
+		self.reds.data = self.reds.data.clamp(min=self._settings['MIN_RGB'], max=self._settings['MAX_RGB'])
+		self.greens.data = self.greens.data.clamp(min=self._settings['MIN_RGB'], max=self._settings['MAX_RGB'])
+		self.blues.data = self.blues.data.clamp(min=self._settings['MIN_RGB'], max=self._settings['MAX_RGB'])
 		self.orders.data = self.orders.data.clamp(min=0.0, max=1.0)
 
 	def copy_and_mutate_s(self, device, parent, child): #device is #new
@@ -428,15 +428,15 @@ class PopulationColourRGBTransforms(torch.nn.Module):
 		with torch.no_grad():
 			self.reds[child, ...] = (
 				self.reds[parent, ...] 
-				+ self._settings.COLOUR_MUTATION_SCALE * torch.randn(
+				+ self._settings['COLOUR_MUTATION_SCALE'] * torch.randn(
 					self.reds[child, ...].shape).to(device))
 			self.greens[child, ...] = (
 				self.greens[parent, ...] 
-				+ self._settings.COLOUR_MUTATION_SCALE * torch.randn(
+				+ self._settings['COLOUR_MUTATION_SCALE'] * torch.randn(
 					self.greens[child, ...].shape).to(device))
 			self.blues[child, ...] = (
 				self.blues[parent, ...] 
-				+ self._settings.COLOUR_MUTATION_SCALE * torch.randn(
+				+ self._settings['COLOUR_MUTATION_SCALE'] * torch.randn(
 					self.blues[child, ...].shape).to(device))
 			self.orders[child, ...] = self.orders[parent, ...] 
 
