@@ -298,8 +298,9 @@ class CollageMaker():
 					is_high_res=False,
 					pop_size=INITIAL_SEARCH_SIZE,
 					segmented_data=segmented_data,
-					background_image=background_image,
-					compositional_image=self._compositional_image)
+					background_image=background_image
+				)
+					# compositional_image=self._compositional_image)
 				_, _, losses, _ = evaluation(
 					self._device, self._dir_results, OPTIM_STEPS, 0, self._clip_model, generator_search, self._augmentations, self._prompt_features, self._compositional_image, self._prompts) #new #?
 					# 0, self._clip_model, generator_search, augmentations, prompt_features) #go back! #?
