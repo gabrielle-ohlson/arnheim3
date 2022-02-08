@@ -19,7 +19,7 @@ from rendering import population_render_transparency, population_render_masked_t
 
 from training import augmentation_transforms, plot_and_save_losses, make_optimizer, evaluation, step_optimization, population_evolution_step
 
-# ------ #TODO: make this defined somewhere
+# ------ #TODO: make these a dict
 #@title evolution settings
 
 # For evolution set POP_SIZE greater than 1 

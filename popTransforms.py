@@ -33,8 +33,8 @@ affine_transform_settings = {
 	'COLOUR_MUTATION_SCALE': 0.02 # (min:0.0, max:0.3)
 }
 
-affine_transform_settings.MIN_ROT = affine_transform_settings.MIN_ROT_DEG * np.pi / 180.0
-affine_transform_settings.MAX_ROT = affine_transform_settings.MAX_ROT_DEG * np.pi / 180.0 
+affine_transform_settings['MIN_ROT'] = affine_transform_settings['MIN_ROT_DEG'] * np.pi / 180.0
+affine_transform_settings['MAX_ROT'] = affine_transform_settings['MAX_ROT_DEG'] * np.pi / 180.0 
 
 # ------
 #@title Evolution settings
@@ -75,7 +75,7 @@ colour_transform_settings = {
 	'MAX_VAL': 1. # (min: 0, max: 1)
 }
 
-colour_transform_settings.MAX_HUE = colour_transform_settings.MAX_HUE_DEG * np.pi / 180.0
+colour_transform_settings['MAX_HUE'] = colour_transform_settings['MAX_HUE_DEG'] * np.pi / 180.0
 
 # ------
 
