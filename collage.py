@@ -20,6 +20,22 @@ from rendering import population_render_transparency, population_render_masked_t
 from training import augmentation_transforms, plot_and_save_losses, make_optimizer, evaluation, step_optimization, population_evolution_step
 
 # ------ #TODO: make these a dict
+
+collage_settings = {
+	'NUM_PATCHES': 100,
+
+	# Render methods
+	# **opacity** patches overlay each other using a combination of alpha and depth,
+	# **transparency** _adds_ patch colours (black therefore appearing transparent),
+	# and **masked transparency** blends patches using the alpha channel.
+	'RENDER_METHOD': "transparency", # ["opacity", "transparency", "masked_transparency"]
+
+	# Number of training steps
+	'OPTIM_STEPS': 200, # (min:200, max:20000)
+	
+	'LEARNING_RATE': 0.1 # (min:0.0, max:0.6)
+}
+
 #@title evolution settings
 
 # For evolution set POP_SIZE greater than 1 
@@ -32,17 +48,17 @@ USE_EVOLUTION = POP_SIZE > 1
 # ------
 
 #@title General settings
-NUM_PATCHES = 100
+# NUM_PATCHES = 100
 
 # ------
 
 #@title Collage configuration settings
 
-# Render methods
-# **opacity** patches overlay each other using a combination of alpha and depth,
-# **transparency** _adds_ patch colours (black therefore appearing transparent),
-# and **masked transparency** blends patches using the alpha channel.
-RENDER_METHOD = "transparency" # ["opacity", "transparency", "masked_transparency"]
+# # Render methods
+# # **opacity** patches overlay each other using a combination of alpha and depth,
+# # **transparency** _adds_ patch colours (black therefore appearing transparent),
+# # and **masked transparency** blends patches using the alpha channel.
+# RENDER_METHOD = "transparency" # ["opacity", "transparency", "masked_transparency"]
 # NUM_PATCHES = 100
 COLOUR_TRANSFORMATIONS = "RGB space" # ["none", "RGB space", "HSV space"]
 
@@ -62,9 +78,9 @@ if COMPOSITIONAL_IMAGE:
 #@title Training settings
 
 # Number of training steps
-OPTIM_STEPS = 200 # (min:200, max:20000)
+# OPTIM_STEPS = 200 # (min:200, max:20000)
 
-LEARNING_RATE = 0.1 # (min:0.0, max:0.6)
+# LEARNING_RATE = 0.1 # (min:0.0, max:0.6)
 
 USE_IMAGE_AUGMENTATIONS = True
 
@@ -96,27 +112,29 @@ class PopulationCollage(torch.nn.Module):
 	"""Population-based segmentation collage network.
 	
 	Image structure in this class is SCHW."""
-	def __init__(self, device, pop_size=1, is_high_res=False, segmented_data=None, background_image=None): #device is #new
+	def __init__(self, device, pop_size=1, is_high_res=False, segmented_data=None, background_image=None, settings): #device is #new
 		"""Constructor, relying on global parameters."""
 		super(PopulationCollage, self).__init__()
 
 		self._device = device
+
+		self._settings = settings
 
 		# Population size.
 		self._pop_size = pop_size
 
 		# Create the spatial transformer and colour transformer for patches.
 		self.spatial_transformer = PopulationAffineTransforms(
-			self._device, num_patches=NUM_PATCHES, pop_size=pop_size).cuda()
+			self._device, num_patches=self._settings['NUM_PATCHES'], pop_size=pop_size).cuda()
 		if COLOUR_TRANSFORMATIONS == "HSV space":
 			self.colour_transformer = PopulationColourHSVTransforms(
-				self._device, num_patches=NUM_PATCHES, pop_size=pop_size).cuda()
+				self._device, num_patches=self._settings['NUM_PATCHES'], pop_size=pop_size).cuda()
 		elif COLOUR_TRANSFORMATIONS == "RGB space":
 			self.colour_transformer = PopulationColourRGBTransforms(
-				self._device, num_patches=NUM_PATCHES, pop_size=pop_size).cuda()
+				self._device, num_patches=self._settings['NUM_PATCHES'], pop_size=pop_size).cuda()
 		else:
 			self.colour_transformer = PopulationOrderOnlyTransforms(
-				self._device, num_patches=NUM_PATCHES, pop_size=pop_size).cuda()
+				self._device, num_patches=self._settings['NUM_PATCHES'], pop_size=pop_size).cuda()
 
 		# Optimisation is run in low-res, final rendering is in high-res.
 		self._high_res = is_high_res
@@ -131,7 +149,7 @@ class PopulationCollage(torch.nn.Module):
 		#print(f'There are {len(self._dataset)} image patches in the dataset')
 
 		# Initial set of indices, pointing to the NUM_PATCHES first dataset images. 
-		self.patch_indices = [np.arange(NUM_PATCHES) % len(self._dataset)
+		self.patch_indices = [np.arange(self._settings['NUM_PATCHES']) % len(self._dataset)
 													for _ in range(pop_size)]
 
 		# Patches in low and high-res.
@@ -153,17 +171,17 @@ class PopulationCollage(torch.nn.Module):
 			#print(f'Store {NUM_PATCHES} image patches for [1, ..., {self._pop_size}]')
 			if self._high_res:
 				self.patches = torch.zeros(
-					1, NUM_PATCHES, 5, CANVAS_HEIGHT * MULTIPLIER_BIG_IMAGE,
+					1, self._settings['NUM_PATCHES'], 5, CANVAS_HEIGHT * MULTIPLIER_BIG_IMAGE,
 					CANVAS_WIDTH * MULTIPLIER_BIG_IMAGE).to('cpu')
 			else:
 				self.patches = torch.zeros(
-					self._pop_size, NUM_PATCHES, 5, CANVAS_HEIGHT, CANVAS_WIDTH
+					self._pop_size, self._settings['NUM_PATCHES'], 5, CANVAS_HEIGHT, CANVAS_WIDTH
 					).to(device)
 			self.patches[:, :, 4, :, :] = 1.0
 
 		# Put the segmented data into the patches.
 		for i in list_indices:
-			for j in range(NUM_PATCHES):
+			for j in range(self._settings['NUM_PATCHES']):
 				k = self.patch_indices[i][j]
 				patch_j = torch.tensor(
 					self._dataset[k].swapaxes(0, 2) / 255.0).to(device)
@@ -189,7 +207,7 @@ class PopulationCollage(torch.nn.Module):
 			# Mutate the child patches with a single swap from the original dataset. 
 			if PATCH_MUTATION_PROBABILITY > np.random.uniform():
 				idx_dataset  = np.random.randint(len(self._dataset))
-				idx_patch  = np.random.randint(NUM_PATCHES)
+				idx_patch  = np.random.randint(self._settings['NUM_PATCHES'])
 				self.patch_indices[child][idx_patch] = idx_dataset
 
 			# Update all the patches for the child.
@@ -215,12 +233,12 @@ class PopulationCollage(torch.nn.Module):
 		shifted_patches = self.spatial_transformer(self.patches)
 		background_image = self._background_image
 		coloured_patches = self.colour_transformer(shifted_patches)
-		if RENDER_METHOD == "transparency":
+		if self._settings['RENDER_METHOD'] == "transparency":
 			img = population_render_transparency(coloured_patches, background_image)
-		elif RENDER_METHOD == "masked_transparency":
+		elif self._settings['RENDER_METHOD'] == "masked_transparency":
 			img = population_render_masked_transparency(
 				coloured_patches, background_image)
-		elif RENDER_METHOD == "opacity":
+		elif self._settings['RENDER_METHOD'] == "opacity":
 			if params is not None and 'gamma' in params:
 				gamma = params['gamma']
 			else:
@@ -241,10 +259,12 @@ class PopulationCollage(torch.nn.Module):
 #@title CollageMaker class
 
 class CollageMaker():
-	def __init__(self, device, clip_model, dir_results, prompts, segmented_data, background_image, compositional_image, output_dir, file_basename, video_steps, population_video): #device is #new #clip_model is #new #dir_results is #new
+	def __init__(self, device, clip_model, dir_results, prompts, segmented_data, background_image, compositional_image, output_dir, file_basename, video_steps, population_video, settings): #device is #new #clip_model is #new #dir_results is #new
 		self._device = device
 		self._clip_model = clip_model
 		self._dir_results = dir_results #new
+
+		self._settings = settings
 
 		self._prompts = prompts
 		self._segmented_data = segmented_data
@@ -287,7 +307,9 @@ class CollageMaker():
 			is_high_res=False,
 			pop_size=POP_SIZE,
 			segmented_data=segmented_data,
-			background_image=background_image)
+			background_image=background_image,
+			settings=self._settings
+		)
 		
 		# Initial search over hyper-parameters.
 		if INITIAL_SEARCH_SIZE > 1:
@@ -298,11 +320,12 @@ class CollageMaker():
 					is_high_res=False,
 					pop_size=INITIAL_SEARCH_SIZE,
 					segmented_data=segmented_data,
-					background_image=background_image
+					background_image=background_image,
+					settings=self._settings
 				)
 					# compositional_image=self._compositional_image)
 				_, _, losses, _ = evaluation(
-					self._device, self._dir_results, OPTIM_STEPS, 0, self._clip_model, generator_search, self._augmentations, self._prompt_features, self._compositional_image, self._prompts) #new #?
+					self._device, self._dir_results, self._settings['OPTIM_STEPS'], 0, self._clip_model, generator_search, self._augmentations, self._prompt_features, self._compositional_image, self._prompts) #new #?
 					# 0, self._clip_model, generator_search, augmentations, prompt_features) #go back! #?
 				print(f"Search {losses}")
 				idx_best = np.argmin(losses)
@@ -311,7 +334,7 @@ class CollageMaker():
 				del generator_search
 			print(f'Initial random search done\n')
 		
-		self._optimizer = make_optimizer(self._generator, LEARNING_RATE)
+		self._optimizer = make_optimizer(self._generator, self._settings['LEARNING_RATE'])
 		self._step = 0
 		self._losses_history = []
 		self._losses_separated_history = []
@@ -326,6 +349,8 @@ class CollageMaker():
 
 	def loop(self):
 		"""Main optimisation/image generation loop. Can be interrupted."""
+		OPTIM_STEPS = self._settings['OPTIM_STEPS']
+
 		if self._step == 0:
 			print(f'Starting optimization of collage. ({OPTIM_STEPS} steps total.)')
 		else:
@@ -366,7 +391,9 @@ class CollageMaker():
 			is_high_res=True,
 			pop_size=1,
 			segmented_data=segmented_data_high_res,
-			background_image=background_image_high_res)
+			background_image=background_image_high_res,
+			settings=self._settings
+		)
 		idx_best = np.argmin(self._losses_history[-1])
 		print(f'Lowest loss for indices: {idx_best}')
 		generator.copy_from(self._generator, 0, idx_best)
@@ -441,7 +468,8 @@ class CollageTiler():
 							 high_res_multiplier,
 							 output_dir,
 							 file_basename,
-							 video_steps=0):
+							 video_steps=0,
+							 settings={}):
 		"""Creates a large collage by producing multiple interlaced collages.
 
 		Args:
@@ -460,6 +488,14 @@ class CollageTiler():
 		self._device = device
 		self._dir_results = dir_results
 		self._clip_model = clip_model
+
+		default_settings = collage_settings.copy()
+
+		if len(settings):
+			for setting, val in settings.items():
+				if setting in default_settings: default_settings.setting = val
+
+		self._settings = default_settings #new #*
 
 		self._tiles_wide = wide
 		self._tiles_high = high
@@ -523,7 +559,8 @@ class CollageTiler():
 						self._device, self._clip_model, self._dir_results, #new
 						prompts, self._segmented_data, 
 						tile_bg, self._compositional_image, self._output_dir,
-						tile_name, self._video_steps, population_video=False)
+						tile_name, self._video_steps, population_video=False,
+						self._settings)
 				self._collage_maker.loop()
 				collage_img = self._collage_maker.high_res_render(
 					self._segmented_data_high_res, 
