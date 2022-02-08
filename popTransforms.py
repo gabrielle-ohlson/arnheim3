@@ -30,7 +30,6 @@ affine_transform_settings = {
 	'POS_AND_ROT_MUTATION_SCALE': 0.02, # (min:0.0, max:0.3) #affine
 	'SCALE_MUTATION_SCALE': 0.02, # (min:0.0, max:0.3) #affine
 	'DISTORT_MUTATION_SCALE': 0.02, # (min:0.0, max:0.3)
-	'COLOUR_MUTATION_SCALE': 0.02 # (min:0.0, max:0.3)
 }
 
 affine_transform_settings['MIN_ROT'] = affine_transform_settings['MIN_ROT_DEG'] * np.pi / 180.0
@@ -60,6 +59,7 @@ affine_transform_settings['MAX_ROT'] = affine_transform_settings['MAX_ROT_DEG'] 
 #@title Colour transform settings
 
 colour_transform_settings = {
+	'COLOUR_MUTATION_SCALE': 0.02, # (min:0.0, max:0.3)
 	# RGB
 	'MIN_RGB': -0.21, # (min: -1, max: 1)
 	'MAX_RGB': 1.0, # (min: 0, max: 1)
