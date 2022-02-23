@@ -560,7 +560,7 @@ class CollageTiler():
 						prompts, self._segmented_data, 
 						tile_bg, self._compositional_image, self._output_dir,
 						tile_name, self._video_steps, population_video=False,
-						self._settings)
+						settings=self._settings)
 				self._collage_maker.loop()
 				collage_img = self._collage_maker.high_res_render(
 					self._segmented_data_high_res, 
