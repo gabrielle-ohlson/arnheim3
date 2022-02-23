@@ -493,7 +493,7 @@ class CollageTiler():
 
 		if len(settings):
 			for setting, val in settings.items():
-				if setting in default_settings: default_settings.setting = val
+				if setting in default_settings: default_settings[setting] = val
 
 		self._settings = default_settings #new #*
 
