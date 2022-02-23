@@ -602,7 +602,7 @@ class CollageTiler():
 		if self._fixed_background_image is None:
 			return None
 		multiplier = self._high_res_multiplier if high_res else 1
-		print('_scale_fixed_background... multiplier/high_res/_background_use/self._height', multiplier, high_res, _background_use, self._height) #remove #debug
+		print('_scale_fixed_background... multiplier/high_res/_background_use/self._height', multiplier, high_res, self._background_use, self._height) #remove #debug
 		if self._background_use == "Local":
 			height = self._tile_height * multiplier
 			width = self._tile_width * multiplier
