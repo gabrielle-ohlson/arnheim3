@@ -63,16 +63,9 @@ USE_EVOLUTION = POP_SIZE > 1
 COLOUR_TRANSFORMATIONS = "RGB space" # ["none", "RGB space", "HSV space"]
 
 
-CANVAS_WIDTH = 224
-CANVAS_HEIGHT = 224
-MULTIPLIER_BIG_IMAGE = 4
-
-# Use additional prompts for different regions
-COMPOSITIONAL_IMAGE = True
-if COMPOSITIONAL_IMAGE:
-  CANVAS_WIDTH *= 2
-  CANVAS_HEIGHT *= 2
-  MULTIPLIER_BIG_IMAGE = int(MULTIPLIER_BIG_IMAGE / 2)
+# CANVAS_WIDTH = 224
+# CANVAS_HEIGHT = 224
+# MULTIPLIER_BIG_IMAGE = 4
 
 # ------
 #@title Training settings
@@ -112,9 +105,13 @@ class PopulationCollage(torch.nn.Module):
 	"""Population-based segmentation collage network.
 	
 	Image structure in this class is SCHW."""
-	def __init__(self, device, pop_size=1, is_high_res=False, segmented_data=None, background_image=None, settings=collage_settings): #device is #new
+	def __init__(self, device, pop_size=1, is_high_res=False, segmented_data=None, background_image=None, canvas_size=224, settings=collage_settings): #device is #new
 		"""Constructor, relying on global parameters."""
 		super(PopulationCollage, self).__init__()
+		
+		self._canvas_size = canvas_size
+		
+		self._MULTIPLIER_BIG_IMAGE = 4/(canvas_size/224)
 
 		self._device = device
 
@@ -171,11 +168,11 @@ class PopulationCollage(torch.nn.Module):
 			#print(f'Store {NUM_PATCHES} image patches for [1, ..., {self._pop_size}]')
 			if self._high_res:
 				self.patches = torch.zeros(
-					1, self._settings['NUM_PATCHES'], 5, CANVAS_HEIGHT * MULTIPLIER_BIG_IMAGE,
-					CANVAS_WIDTH * MULTIPLIER_BIG_IMAGE).to('cpu')
+					1, self._settings['NUM_PATCHES'], 5, self._canvas_size * self._MULTIPLIER_BIG_IMAGE,
+					self._canvas_size * self._MULTIPLIER_BIG_IMAGE).to('cpu')
 			else:
 				self.patches = torch.zeros(
-					self._pop_size, self._settings['NUM_PATCHES'], 5, CANVAS_HEIGHT, CANVAS_WIDTH
+					self._pop_size, self._settings['NUM_PATCHES'], 5, self._canvas_size, self._canvas_size
 					).to(device)
 			self.patches[:, :, 4, :, :] = 1.0
 
@@ -188,11 +185,11 @@ class PopulationCollage(torch.nn.Module):
 				width_j = patch_j.shape[1]
 				height_j = patch_j.shape[2]
 				if self._high_res:
-					w0 = int((CANVAS_WIDTH * MULTIPLIER_BIG_IMAGE - width_j) / 2.0)
-					h0 = int((CANVAS_HEIGHT * MULTIPLIER_BIG_IMAGE - height_j) / 2.0)
+					w0 = int((self._canvas_size * self._MULTIPLIER_BIG_IMAGE - width_j) / 2.0)
+					h0 = int((self._canvas_size * self._MULTIPLIER_BIG_IMAGE - height_j) / 2.0)
 				else:
-					w0 = int((CANVAS_WIDTH - width_j) / 2.0)
-					h0 = int((CANVAS_HEIGHT - height_j) / 2.0)
+					w0 = int((self._canvas_size - width_j) / 2.0)
+					h0 = int((self._canvas_size - height_j) / 2.0)
 				if w0 < 0 or h0 < 0:
 					import pdb; pdb.set_trace()
 				self.patches[i, j, :4, w0:(w0 + width_j), h0:(h0 + height_j)] = patch_j
@@ -259,12 +256,14 @@ class PopulationCollage(torch.nn.Module):
 #@title CollageMaker class
 
 class CollageMaker():
-	def __init__(self, device, clip_model, dir_results, prompts, segmented_data, background_image, compositional_image, output_dir, file_basename, video_steps, population_video, settings): #device is #new #clip_model is #new #dir_results is #new
+	def __init__(self, device, clip_model, dir_results, prompts, segmented_data, background_image, compositional_image, output_dir, file_basename, video_steps, population_video, canvas_size, settings): #device is #new #clip_model is #new #dir_results is #new
 		self._device = device
 		self._clip_model = clip_model
 		self._dir_results = dir_results #new
 
 		self._settings = settings
+		
+		self._canvas_size = canvas_size
 
 		self._prompts = prompts
 		self._segmented_data = segmented_data
@@ -308,6 +307,7 @@ class CollageMaker():
 			pop_size=POP_SIZE,
 			segmented_data=segmented_data,
 			background_image=background_image,
+			canvas_size=self._canvas_size,
 			settings=self._settings
 		)
 		
@@ -321,6 +321,7 @@ class CollageMaker():
 					pop_size=INITIAL_SEARCH_SIZE,
 					segmented_data=segmented_data,
 					background_image=background_image,
+					canvas_size=self._canvas_size,
 					settings=self._settings
 				)
 					# compositional_image=self._compositional_image)
@@ -392,6 +393,7 @@ class CollageMaker():
 			pop_size=1,
 			segmented_data=segmented_data_high_res,
 			background_image=background_image_high_res,
+			canvas_size=self._canvas_size,
 			settings=self._settings
 		)
 		idx_best = np.argmin(self._losses_history[-1])
@@ -487,10 +489,10 @@ class CollageTiler():
 		"""
 		self._device = device
 		self._dir_results = dir_results
-		self._clip_model = clip_model
+		self._clip_model = clip_model			
 
 		default_settings = collage_settings.copy()
-
+		
 		if len(settings):
 			for setting, val in settings.items():
 				if setting in default_settings: default_settings[setting] = val
@@ -560,7 +562,7 @@ class CollageTiler():
 						prompts, self._segmented_data, 
 						tile_bg, self._compositional_image, self._output_dir,
 						tile_name, self._video_steps, population_video=False,
-						settings=self._settings)
+						canvas_size=self._tile_width, settings=self._settings)
 				self._collage_maker.loop()
 				collage_img = self._collage_maker.high_res_render(
 					self._segmented_data_high_res, 
