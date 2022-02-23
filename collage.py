@@ -112,6 +112,8 @@ class PopulationCollage(torch.nn.Module):
 		self._canvas_size = canvas_size
 		
 		self._MULTIPLIER_BIG_IMAGE = 4/(canvas_size/224)
+		
+		print('debug', is_high_res, canvas_size, self._MULTIPLIER_BIG_IMAGE) #remove #debug
 
 		self._device = device
 
@@ -256,15 +258,13 @@ class PopulationCollage(torch.nn.Module):
 #@title CollageMaker class
 
 class CollageMaker():
-	def __init__(self, device, clip_model, dir_results, prompts, segmented_data, background_image, compositional_image, output_dir, file_basename, video_steps, population_video, canvas_size, settings): #device is #new #clip_model is #new #dir_results is #new
+	def __init__(self, device, clip_model, dir_results, prompts, segmented_data, background_image, compositional_image, output_dir, file_basename, video_steps, population_video, settings): #device is #new #clip_model is #new #dir_results is #new
 		self._device = device
 		self._clip_model = clip_model
 		self._dir_results = dir_results #new
 
 		self._settings = settings
-		
-		self._canvas_size = canvas_size
-
+				
 		self._prompts = prompts
 		self._segmented_data = segmented_data
 		self._background_image = background_image
@@ -282,12 +282,15 @@ class CollageMaker():
 					filename=f"{self._output_dir}/{self._file_basename}_pop_sample.mp4")
 		
 		if self._compositional_image:
+			self._canvas_size = 448
+			self._MUL
 			if len(self._prompts) != 10:
 				raise ValueError(
 					"Missing compositional image prompts; found {len(self._prompts)}")
 			print("Global prompt is", self._prompts[-1])
 			print("Composition prompts", self._prompts)
 		else:
+			self._canvas_size = 224
 			if len(self._prompts) != 1:
 				raise ValueError(
 						"Missing compositional image prompts; found {len(self._prompts)}")
@@ -507,14 +510,22 @@ class CollageTiler():
 		self._fixed_background_image = fixed_background_image
 		self._background_use = background_use
 		self._compositional_image = compositional
-		self._high_res_multiplier = high_res_multiplier
 		self._output_dir = output_dir
 		self._file_basename = file_basename
 		self._video_steps = video_steps
+		
+		if self._compositional_image:
+			self._high_res_multiplier = 2
+			self._tile_width = 448
+			self._tile_height = 448
+		else:
+			self._high_res_multiplier = 4
+			self._tile_width = 224
+			self._tile_height = 224
 
 		self._tile_base = "img_tile_y{}_x{}.npy"
-		self._tile_width = 448 if self._compositional_image else 224
-		self._tile_height = 448 if self._compositional_image else 224
+		# self._tile_width = 448 if self._compositional_image else 224
+		# self._tile_height = 448 if self._compositional_image else 224
 		self._overlap = 1. / 3.
 
 		# Size of bigger image
@@ -562,7 +573,7 @@ class CollageTiler():
 						prompts, self._segmented_data, 
 						tile_bg, self._compositional_image, self._output_dir,
 						tile_name, self._video_steps, population_video=False,
-						canvas_size=self._tile_width, settings=self._settings)
+						settings=self._settings)
 				self._collage_maker.loop()
 				collage_img = self._collage_maker.high_res_render(
 					self._segmented_data_high_res, 
@@ -591,6 +602,7 @@ class CollageTiler():
 		if self._fixed_background_image is None:
 			return None
 		multiplier = self._high_res_multiplier if high_res else 1
+		print('_scale_fixed_background... multiplier/high_res/_background_use/self._height', multiplier, high_res, _background_use, self._height) #remove #debug
 		if self._background_use == "Local":
 			height = self._tile_height * multiplier
 			width = self._tile_width * multiplier
