@@ -112,7 +112,7 @@ class PopulationCollage(torch.nn.Module):
 	"""Population-based segmentation collage network.
 	
 	Image structure in this class is SCHW."""
-	def __init__(self, device, pop_size=1, is_high_res=False, segmented_data=None, background_image=None, settings): #device is #new
+	def __init__(self, device, pop_size=1, is_high_res=False, segmented_data=None, background_image=None, settings=collage_settings): #device is #new
 		"""Constructor, relying on global parameters."""
 		super(PopulationCollage, self).__init__()
 
