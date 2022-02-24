@@ -94,7 +94,7 @@ class PopulationAffineTransforms(torch.nn.Module):
 
 		if len(settings):
 			for setting, val in settings.items():
-				if setting in default_settings: default_settings.setting = val
+				if setting in default_settings: default_settings[setting] = val
 
 		self._settings = default_settings #new #*
 
@@ -286,7 +286,7 @@ class PopulationColourHSVTransforms(torch.nn.Module):
 		default_settings = colour_transform_settings.copy()
 		if len(settings):
 			for setting, val in settings.items():
-				if setting in default_settings: default_settings.setting = val
+				if setting in default_settings: default_settings[setting] = val
 		
 		self._settings = default_settings
 
@@ -383,7 +383,7 @@ class PopulationColourRGBTransforms(torch.nn.Module):
 
 		if len(settings):
 			for setting, val in settings.items():
-				if setting in default_settings: default_settings.setting = val
+				if setting in default_settings: default_settings[setting] = val
 		
 		self._settings = default_settings
 
