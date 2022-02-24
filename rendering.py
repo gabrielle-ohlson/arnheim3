@@ -1,6 +1,6 @@
 #@title Imports:
 import torch
-
+import torch.nn.functional as F
 # ------
 
 # Invert image colours to have a white background?
