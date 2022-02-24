@@ -3,6 +3,7 @@ import clip
 import copy
 import cv2
 from google.colab.patches import cv2_imshow
+import math
 import numpy as np
 from skimage.transform import resize
 import time
@@ -118,7 +119,7 @@ class PopulationCollage(torch.nn.Module):
 		
 		self._CANVAS_WIDTH = self._settings['CANVAS_WIDTH']
 		self._CANVAS_HEIGHT = self._settings['CANVAS_HEIGHT']
-		self._HIGH_RES_MULTIPLIER = self._settings['HIGH_RES_MULTIPLIER']
+		self._high_res_multiplier = self._settings['HIGH_RES_MULTIPLIER']
 
 		# Population size.
 		self._pop_size = pop_size
@@ -173,8 +174,8 @@ class PopulationCollage(torch.nn.Module):
 			#print(f'Store {NUM_PATCHES} image patches for [1, ..., {self._pop_size}]')
 			if self._high_res:
 				self.patches = torch.zeros(
-					1, self._settings['NUM_PATCHES'], 5, self._CANVAS_HEIGHT * self._HIGH_RES_MULTIPLIER,
-					self._CANVAS_WIDTH * self._HIGH_RES_MULTIPLIER).to('cpu')
+					1, self._settings['NUM_PATCHES'], 5, self._CANVAS_HEIGHT * self._high_res_multiplier,
+					self._CANVAS_WIDTH * self._high_res_multiplier).to('cpu')
 			else:
 				self.patches = torch.zeros(
 					self._pop_size, self._settings['NUM_PATCHES'], 5, self._CANVAS_HEIGHT, self._CANVAS_WIDTH
@@ -190,8 +191,8 @@ class PopulationCollage(torch.nn.Module):
 				width_j = patch_j.shape[1]
 				height_j = patch_j.shape[2]
 				if self._high_res:
-					w0 = int((self._CANVAS_WIDTH * self._HIGH_RES_MULTIPLIER - width_j) / 2.0)
-					h0 = int((self._CANVAS_HEIGHT * self._HIGH_RES_MULTIPLIER - height_j) / 2.0)
+					w0 = int((self._CANVAS_WIDTH * self._high_res_multiplier - width_j) / 2.0)
+					h0 = int((self._CANVAS_HEIGHT * self._high_res_multiplier - height_j) / 2.0)
 				else:
 					w0 = int((self._CANVAS_WIDTH - width_j) / 2.0)
 					h0 = int((self._CANVAS_HEIGHT - height_j) / 2.0)
@@ -648,20 +649,19 @@ class CollageTiler():
 		Note that (0,0) is not needed as its contribution is already in (0,1) 
 		"""
 		if self._fixed_background is None:
-			tile_border_bg = np.zeros((self._high_res_tile_height,
-																self._high_res_tile_width, 3))
+			tile_border_bg = np.zeros((self._high_res_tile_height, self._high_res_tile_width, 3))
 		else:
 			if self._background_use == "Local":
 				tile_border_bg = self._fixed_background.copy()
 			else:  # Crop out section for this tile.
-				#orgin_y = self._y * self._high_res_tile_height - int(
-				#    self._high_res_tile_height * 2 * self._overlap)
 				orgin_y = self._y * (self._high_res_tile_height
-														 - int(self._high_res_tile_height * self._overlap))
-				orgin_x = self._x * (self._high_res_tile_width 
-														 - int(self._high_res_tile_width * self._overlap))
-				#orgin_x = self._x * self._high_res_tile_width - int(
-				#    self._high_res_tile_width * 2 * self._overlap)
+						     - math.ceil(self._tile_height * self._overlap)
+						     * self._high_res_multiplier)
+				
+				orgin_x = self._x * (self._high_res_tile_width
+						     - math.ceil(self._tile_width * self._overlap)
+						     * self._high_res_multiplier)
+
 				tile_border_bg = self._fixed_background[
 						orgin_y : orgin_y + self._high_res_tile_height,
 						orgin_x : orgin_x + self._high_res_tile_width, :]
@@ -706,6 +706,7 @@ class CollageTiler():
 		# print(f"Loading tile {self._tile_base.format(tile_idx[0], tile_idx[1])}")
 		source = np.load(self._tile_base.format(tile_idx[0], tile_idx[1]))
 		if location == "above":
+			import pdb; pdb.set_trace()
 			target[0 : pixel_overlap, 0 : big_width, :] = source[
 				big_height - pixel_overlap : big_height, 0 : big_width, :]
 		if location == "left":
