@@ -23,7 +23,9 @@ from training import augmentation_transforms, plot_and_save_losses, make_optimiz
 
 collage_settings = {
 	'NUM_PATCHES': 100,
-
+	'CANVAS_WIDTH': 224,
+	'CANVAS_HEIGHT': 224,
+	'HIGH_RES_MULTIPLIER': 4,
 	# Render methods
 	# **opacity** patches overlay each other using a combination of alpha and depth,
 	# **transparency** _adds_ patch colours (black therefore appearing transparent),
@@ -105,19 +107,17 @@ class PopulationCollage(torch.nn.Module):
 	"""Population-based segmentation collage network.
 	
 	Image structure in this class is SCHW."""
-	def __init__(self, device, pop_size=1, is_high_res=False, segmented_data=None, background_image=None, canvas_size=224, settings=collage_settings): #device is #new
+	def __init__(self, device, pop_size=1, is_high_res=False, segmented_data=None, background_image=None, settings=collage_settings): #device is #new
 		"""Constructor, relying on global parameters."""
 		super(PopulationCollage, self).__init__()
-		
-		self._canvas_size = canvas_size
-		
-		self._MULTIPLIER_BIG_IMAGE = 4/(canvas_size/224)
-		
-		print('debug', is_high_res, canvas_size, self._MULTIPLIER_BIG_IMAGE) #remove #debug
-
+						
 		self._device = device
 
 		self._settings = settings
+		
+		self._CANVAS_WIDTH = self._settings['CANVAS_WIDTH']
+		self._CANVAS_HEIGHT = self._settings['CANVAS_HEIGHT']
+		self._HIGH_RES_MULTIPLIER = self._settings['HIGH_RES_MULTIPLIER']
 
 		# Population size.
 		self._pop_size = pop_size
@@ -170,11 +170,11 @@ class PopulationCollage(torch.nn.Module):
 			#print(f'Store {NUM_PATCHES} image patches for [1, ..., {self._pop_size}]')
 			if self._high_res:
 				self.patches = torch.zeros(
-					1, self._settings['NUM_PATCHES'], 5, self._canvas_size * self._MULTIPLIER_BIG_IMAGE,
-					self._canvas_size * self._MULTIPLIER_BIG_IMAGE).to('cpu')
+					1, self._settings['NUM_PATCHES'], 5, self._CANVAS_HEIGHT * self._HIGH_RES_MULTIPLIER,
+					self._CANVAS_WIDTH * self._HIGH_RES_MULTIPLIER).to('cpu')
 			else:
 				self.patches = torch.zeros(
-					self._pop_size, self._settings['NUM_PATCHES'], 5, self._canvas_size, self._canvas_size
+					self._pop_size, self._settings['NUM_PATCHES'], 5, self._CANVAS_HEIGHT, self._CANVAS_WIDTH
 					).to(device)
 			self.patches[:, :, 4, :, :] = 1.0
 
@@ -187,11 +187,11 @@ class PopulationCollage(torch.nn.Module):
 				width_j = patch_j.shape[1]
 				height_j = patch_j.shape[2]
 				if self._high_res:
-					w0 = int((self._canvas_size * self._MULTIPLIER_BIG_IMAGE - width_j) / 2.0)
-					h0 = int((self._canvas_size * self._MULTIPLIER_BIG_IMAGE - height_j) / 2.0)
+					w0 = int((self._CANVAS_WIDTH * self._HIGH_RES_MULTIPLIER - width_j) / 2.0)
+					h0 = int((self._CANVAS_HEIGHT * self._HIGH_RES_MULTIPLIER - height_j) / 2.0)
 				else:
-					w0 = int((self._canvas_size - width_j) / 2.0)
-					h0 = int((self._canvas_size - height_j) / 2.0)
+					w0 = int((self._CANVAS_WIDTH - width_j) / 2.0)
+					h0 = int((self._CANVAS_HEIGHT - height_j) / 2.0)
 				if w0 < 0 or h0 < 0:
 					import pdb; pdb.set_trace()
 				self.patches[i, j, :4, w0:(w0 + width_j), h0:(h0 + height_j)] = patch_j
@@ -264,6 +264,8 @@ class CollageMaker():
 		self._dir_results = dir_results #new
 
 		self._settings = settings
+		self._CANVAS_WIDTH = self._settings['CANVAS_WIDTH']
+		self._CANVAS_HEIGHT = self._settings['CANVAS_HEIGHT']
 				
 		self._prompts = prompts
 		self._segmented_data = segmented_data
@@ -282,7 +284,6 @@ class CollageMaker():
 					filename=f"{self._output_dir}/{self._file_basename}_pop_sample.mp4")
 		
 		if self._compositional_image:
-			self._canvas_size = 448
 			self._MUL
 			if len(self._prompts) != 10:
 				raise ValueError(
@@ -290,7 +291,6 @@ class CollageMaker():
 			print("Global prompt is", self._prompts[-1])
 			print("Composition prompts", self._prompts)
 		else:
-			self._canvas_size = 224
 			if len(self._prompts) != 1:
 				raise ValueError(
 						"Missing compositional image prompts; found {len(self._prompts)}")
@@ -310,7 +310,6 @@ class CollageMaker():
 			pop_size=POP_SIZE,
 			segmented_data=segmented_data,
 			background_image=background_image,
-			canvas_size=self._canvas_size,
 			settings=self._settings
 		)
 		
@@ -324,7 +323,6 @@ class CollageMaker():
 					pop_size=INITIAL_SEARCH_SIZE,
 					segmented_data=segmented_data,
 					background_image=background_image,
-					canvas_size=self._canvas_size,
 					settings=self._settings
 				)
 					# compositional_image=self._compositional_image)
@@ -396,7 +394,6 @@ class CollageMaker():
 			pop_size=1,
 			segmented_data=segmented_data_high_res,
 			background_image=background_image_high_res,
-			canvas_size=self._canvas_size,
 			settings=self._settings
 		)
 		idx_best = np.argmin(self._losses_history[-1])
@@ -470,7 +467,6 @@ class CollageTiler():
 							 fixed_background_image,
 							 background_use,
 							 compositional,
-							 high_res_multiplier,
 							 output_dir,
 							 file_basename,
 							 video_steps=0,
@@ -501,6 +497,10 @@ class CollageTiler():
 				if setting in default_settings: default_settings[setting] = val
 
 		self._settings = default_settings #new #*
+		
+		self._high_res_multiplier = self._settings['HIGH_RES_MULTIPLIER']
+		self._CANVAS_WIDTH = self._settings['CANVAS_WIDTH']
+		self._CANVAS_HEIGHT = self._settings['CANVAS_HEIGHT']
 
 		self._tiles_wide = wide
 		self._tiles_high = high
@@ -514,23 +514,31 @@ class CollageTiler():
 		self._file_basename = file_basename
 		self._video_steps = video_steps
 		
+		self._width = self._CANVAS_WIDTH #TODO: check if this should instead correspond directly with tile size
+		self._height = self._CANVAS_HEIGHT
+		self._tile_width = int(np.floor(self._width / self._tiles_wide))
+		self._tile_height = int(np.floor(self._height / self._tiles_wide))
+		
+		'''
 		if self._compositional_image:
-			self._high_res_multiplier = 2
 			self._tile_width = 448
 			self._tile_height = 448
 		else:
 			self._high_res_multiplier = 4
 			self._tile_width = 224
 			self._tile_height = 224
-
+		'''
+		
 		self._tile_base = "img_tile_y{}_x{}.npy"
 		# self._tile_width = 448 if self._compositional_image else 224
 		# self._tile_height = 448 if self._compositional_image else 224
 		self._overlap = 1. / 3.
-
+		
+		'''
 		# Size of bigger image
 		self._width = self._tile_width * self._tiles_wide
 		self._height = self._tile_height * self._tiles_high
+		'''
 
 		self._high_res_tile_width = self._tile_width * self._high_res_multiplier
 		self._high_res_tile_height = self._tile_height * self._high_res_multiplier
