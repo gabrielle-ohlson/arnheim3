@@ -1,5 +1,3 @@
-#TODO
-
 #@title Imports:
 import clip
 import copy
@@ -239,9 +237,15 @@ class PopulationCollage(torch.nn.Module):
 		coloured_patches = self.colour_transformer(shifted_patches)
 		if self._settings['RENDER_METHOD'] == "transparency":
 			img = population_render_transparency(coloured_patches, background_image)
-		elif self._settings['RENDER_METHOD'] == "masked_transparency":
+		elif self._settings['RENDER_METHOD'] == "masked_transparency_clipped":
 			img = population_render_masked_transparency(
-				coloured_patches, background_image)
+				coloured_patches, "clipped", background_image)
+		elif self._settings['RENDER_METHOD'] == "masked_transparency_normed":
+			img = population_render_masked_transparency(
+				coloured_patches, "normed", background_image)
+# 		elif self._settings['RENDER_METHOD'] == "masked_transparency":
+# 			img = population_render_masked_transparency(
+# 				coloured_patches, background_image)
 		elif self._settings['RENDER_METHOD'] == "opacity":
 			if params is not None and 'gamma' in params:
 				gamma = params['gamma']
