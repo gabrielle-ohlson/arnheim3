@@ -26,11 +26,16 @@ collage_settings = {
 	'CANVAS_WIDTH': 224,
 	'CANVAS_HEIGHT': 224,
 	'HIGH_RES_MULTIPLIER': 4,
+	# Number of training steps
+	'OPTIM_STEPS': 200, # (min:200, max:20000)
+
+	'LEARNING_RATE': 0.1, # (min:0.0, max:0.6)
 	# Render methods
 	# **opacity** patches overlay each other using a combination of alpha and depth,
 	# **transparency** _adds_ patch colours (black therefore appearing transparent),
 	# and **masked transparency** blends patches using the alpha channel.
 	'RENDER_METHOD': "transparency", # ["opacity", "transparency", "masked_transparency"]
+	
 	'INITIAL_MIN_RGB': 0.1,
 	'INITIAL_MAX_RGB': 0.5
 # * INITIAL_MIN_RGB=0.7; INITIAL_MAX_RGB=1.0
