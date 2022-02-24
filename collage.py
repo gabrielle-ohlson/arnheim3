@@ -529,8 +529,8 @@ class CollageTiler():
 		
 		self._overlap = 1. / 3.
 		
-    		self._width = int(((2 * self._tiles_wide + 1) * self._tile_width) / 3.)
-    		self._height = int(((2 * self._tiles_high + 1) * self._tile_height) / 3.)
+		self._width = int(((2 * self._tiles_wide + 1) * self._tile_width) / 3.)
+		self._height = int(((2 * self._tiles_high + 1) * self._tile_height) / 3.)
 		
 		'''
  		self._width = self._CANVAS_WIDTH #TODO: check if this should instead correspond directly with tile size
