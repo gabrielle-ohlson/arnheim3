@@ -521,12 +521,24 @@ class CollageTiler():
 		self._file_basename = file_basename
 		self._video_steps = video_steps
 		
-		self._width = self._CANVAS_WIDTH #TODO: check if this should instead correspond directly with tile size
-		self._height = self._CANVAS_HEIGHT
-		self._tile_width = int(np.floor(self._width / self._tiles_wide))
-		self._tile_height = int(np.floor(self._height / self._tiles_wide))
+		self._tile_base = "img_tile_y{}_x{}.npy"
+		
+		# Size of bigger image
+		self._tile_width = self._CANVAS_WIDTH
+		self._tile_height = self._CANVAS_HEIGHT
+		
+		self._overlap = 1. / 3.
+		
+    		self._width = int(((2 * self._tiles_wide + 1) * self._tile_width) / 3.)
+    		self._height = int(((2 * self._tiles_high + 1) * self._tile_height) / 3.)
 		
 		'''
+ 		self._width = self._CANVAS_WIDTH #TODO: check if this should instead correspond directly with tile size
+ 		self._height = self._CANVAS_HEIGHT
+ 		self._tile_width = int(np.floor(self._width / self._tiles_wide))
+ 		self._tile_height = int(np.floor(self._height / self._tiles_wide))
+		
+
 		if self._compositional_image:
 			self._tile_width = 448
 			self._tile_height = 448
@@ -534,14 +546,7 @@ class CollageTiler():
 			self._high_res_multiplier = 4
 			self._tile_width = 224
 			self._tile_height = 224
-		'''
-		
-		self._tile_base = "img_tile_y{}_x{}.npy"
-		# self._tile_width = 448 if self._compositional_image else 224
-		# self._tile_height = 448 if self._compositional_image else 224
-		self._overlap = 1. / 3.
-		
-		'''
+
 		# Size of bigger image
 		self._width = self._tile_width * self._tiles_wide
 		self._height = self._tile_height * self._tiles_high
