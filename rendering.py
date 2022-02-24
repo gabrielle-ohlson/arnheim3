@@ -73,9 +73,11 @@ def population_render_masked_transparency(x, mode, b=None):
 			# Anti-aliasing on the countours of the sum of patches.
 			mask = mask_sum.clamp(0., 1.)
 		else: raise ValueError(f"Unknown masked_transparency mode {mode}")
-			
-		y = torch.where(mask.sum(1) > RENDER_OVERLAP_MASK_THRESHOLD, y[:, :3, :, :],
-									b.unsqueeze(0)[:, :3, :, :])
+
+		y = y[:, :3, :, :] * mask + b.unsqueeze(0)[:, :3, :, :] * (1 - mask)
+
+# 		y = torch.where(mask.sum(1) > RENDER_OVERLAP_MASK_THRESHOLD, y[:, :3, :, :],
+# 									b.unsqueeze(0)[:, :3, :, :])
 	return y.clamp(0., 1.).permute(0, 2, 3, 1)
 
 
