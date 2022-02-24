@@ -31,11 +31,9 @@ collage_settings = {
 	# **transparency** _adds_ patch colours (black therefore appearing transparent),
 	# and **masked transparency** blends patches using the alpha channel.
 	'RENDER_METHOD': "transparency", # ["opacity", "transparency", "masked_transparency"]
-
-	# Number of training steps
-	'OPTIM_STEPS': 200, # (min:200, max:20000)
-	
-	'LEARNING_RATE': 0.1 # (min:0.0, max:0.6)
+	'INITIAL_MIN_RGB': 0.1,
+	'INITIAL_MAX_RGB': 0.5
+# * INITIAL_MIN_RGB=0.7; INITIAL_MAX_RGB=1.0
 }
 
 #@title evolution settings
@@ -130,7 +128,9 @@ class PopulationCollage(torch.nn.Module):
 				self._device, num_patches=self._settings['NUM_PATCHES'], pop_size=pop_size).cuda()
 		elif COLOUR_TRANSFORMATIONS == "RGB space":
 			self.colour_transformer = PopulationColourRGBTransforms(
-				self._device, num_patches=self._settings['NUM_PATCHES'], pop_size=pop_size).cuda()
+				self._device, num_patches=self._settings['NUM_PATCHES'], pop_size=pop_size,
+				settings={'INITIAL_MIN_RGB': self._settings['INITIAL_MIN_RGB'], 'INITIAL_MAX_RGB': self._settings['INITIAL_MAX_RGB']}
+			).cuda()
 		else:
 			self.colour_transformer = PopulationOrderOnlyTransforms(
 				self._device, num_patches=self._settings['NUM_PATCHES'], pop_size=pop_size).cuda()
@@ -488,7 +488,10 @@ class CollageTiler():
 		"""
 		self._device = device
 		self._dir_results = dir_results
-		self._clip_model = clip_model			
+		self._clip_model = clip_model
+		
+		if 'RENDER_METHOD' in settings and settings['RENDER_METHOD'] == 'masked_transparency':
+			collage_settings['INITIAL_MIN_RGB'], collage_settings['INITIAL_MAX_RGB'] = 0.7, 1.0 # adjust to new min and max rgb 
 
 		default_settings = collage_settings.copy()
 		
