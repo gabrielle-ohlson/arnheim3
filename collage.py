@@ -289,7 +289,6 @@ class CollageMaker():
 					filename=f"{self._output_dir}/{self._file_basename}_pop_sample.mp4")
 		
 		if self._compositional_image:
-			self._MUL
 			if len(self._prompts) != 10:
 				raise ValueError(
 					"Missing compositional image prompts; found {len(self._prompts)}")
